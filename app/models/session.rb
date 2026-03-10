@@ -2,6 +2,7 @@ class Session < ApplicationRecord
   belongs_to :user, optional: true
   has_many :messages, dependent: :destroy
   has_many :draft_artifacts, dependent: :destroy
+  has_many :artifacts, dependent: :destroy
 
   validates :session_type, presence: true
   validates :status, presence: true
@@ -19,4 +20,8 @@ class Session < ApplicationRecord
     ready_to_publish: "ready_to_publish",
     error: "error"
   }
+
+  def active_artifact
+    artifacts.last
+  end
 end

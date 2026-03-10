@@ -10,7 +10,16 @@ module Api
           content: params[:content]
         ).call
 
-        render_success(result, status: :created)
+        render json: {
+          data: {
+            user_message: result[:user_message],
+            assistant_message: result[:assistant_message],
+            artifact: result[:artifact],
+            artifact_insights: result[:artifact_insights]
+          },
+          meta: { api_version: "v1" },
+          error: nil
+        }
       end
 
     end

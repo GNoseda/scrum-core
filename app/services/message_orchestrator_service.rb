@@ -15,20 +15,60 @@ class MessageOrchestratorService
 
     context = Context::ContextBuilder.new(session: @session).call
 
-    ai_response = LlmClient.new.generate(context)
+    artifact = ArtifactManagerService.new(
+      session: @session,
+      user_message: user_message,
+      ai_message: nil,
+      artifact_patch: nil
+    ).send(:find_or_create_artifact)
+
+    inspection = ArtifactInspectionService.new(
+      artifact: artifact
+    )
+
+    missing_fields = inspection.missing_fields
+    next_field = inspection.next_field
+
+    prompt = PromptBuilderService.new(
+      session: @session,
+      context: context,
+      artifact: artifact,
+      missing_fields: missing_fields,
+      next_field: next_field
+    ).build
+    
+    field_strategy = ArtifactFieldStrategyService.new(
+      artifact: artifact,
+      missing_fields: missing_fields
+    )
+
+
+
+    ai_result = LlmClient.new.generate(prompt)
 
     assistant_message = Message.create!(
       session: @session,
       role: :assistant,
-      content: ai_response
+      content: ai_result[:message]
     )
+
+    artifact = ArtifactManagerService.new(
+      session: @session,
+      user_message: user_message,
+      ai_message: assistant_message,
+      artifact_patch: ai_result[:artifact_patch]
+    ).call
 
     {
       user_message: serialize_message(user_message),
-      assistant_message: serialize_message(assistant_message)
+      assistant_message: serialize_message(assistant_message),
+      artifact: serialize_artifact(artifact),
+      artifact_insights: {
+        missing_fields: missing_fields
+      }
     }
 
-  end
+end
 
   private
 
@@ -41,6 +81,20 @@ class MessageOrchestratorService
       references: message.references,
       created_at: message.created_at,
       updated_at: message.updated_at
+    }
+  end
+
+  def serialize_artifact(artifact)
+    return nil unless artifact
+
+    {
+      id: artifact.id,
+      session_id: artifact.session_id,
+      artifact_type: artifact.artifact_type,
+      status: artifact.status,
+      content: artifact.content,
+      created_at: artifact.created_at,
+      updated_at: artifact.updated_at
     }
   end
 

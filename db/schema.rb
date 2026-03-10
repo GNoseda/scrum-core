@@ -10,9 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_032418) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_234429) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "artifacts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "artifact_type", null: false
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.uuid "session_id", null: false
+    t.string "status", default: "drafting", null: false
+    t.datetime "updated_at", null: false
+    t.index ["session_id"], name: "index_artifacts_on_session_id"
+  end
 
   create_table "draft_artifacts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "artifact_type", null: false
@@ -50,6 +60,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_032418) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "artifacts", "sessions"
   add_foreign_key "draft_artifacts", "sessions"
   add_foreign_key "messages", "sessions"
   add_foreign_key "sessions", "users"
