@@ -22,6 +22,8 @@ gem "solid_queue"
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
+gem "ruby-openai"
+
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false
 
@@ -34,6 +36,8 @@ gem "thruster", require: false
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  gem "dotenv-rails"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false

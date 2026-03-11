@@ -1,28 +1,37 @@
 class LlmClient
+  PROVIDERS = {
+    "openai" => -> { LlmProviders::OpenAiProvider.new }
+  }.freeze
 
-  def generate(prompt)
+  def generate(messages)
+    provider = resolve_provider
+    return provider.generate(messages) if provider
 
-    {
-      message: "Stub AI response based on #{prompt.size} messages",
-      artifact_patch: infer_patch_from_prompt(prompt)
-    }
-
+    stub_generate(messages)
   end
 
   private
 
-  def infer_patch_from_prompt(prompt)
-    last_user_message = prompt.reverse.find { |m| m[:role] == "user" }
+  def resolve_provider
+    factory = PROVIDERS[ENV.fetch("LLM_PROVIDER", "stub")]
+    factory&.call
+  end
 
+  def stub_generate(messages)
+    {
+      message: "Stub AI response based on #{messages.size} messages",
+      artifact_patch: infer_patch_from_prompt(messages)
+    }
+  end
+
+  def infer_patch_from_prompt(messages)
+    last_user_message = messages.reverse.find { |m| m[:role] == "user" }
     return nil unless last_user_message
 
     content = last_user_message[:content].downcase
 
     if content.include?("check-in")
-      {
-        title: "Improve check-in experience"
-      }
+      { title: "Improve check-in experience" }
     end
   end
-
 end
